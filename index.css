@@ -1,0 +1,381 @@
+/* Brand Color Palette (from logo)*/
+
+:root {
+  --bg:       #1a1a1a;
+  --surface:  #242424;
+  --border:   #c0392b;
+  --border2:  #888888;
+  --text:     #f0f0f0;
+  --muted:    #999999;
+  --accent:   #c0392b;
+  --accent2:  #e84c3d;
+  --danger:   #ff4444;
+  --success:  #e84c3d;
+  --shadow:   0 4px 18px rgba(192, 57, 43, 0.25);
+  --inset-bg: #111111;
+}
+ 
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+ 
+body {
+  background: var(--bg);
+  font-family: 'DM Mono', monospace;
+  color: var(--text);
+  min-height: 100vh;
+  padding: 36px 20px 80px;
+}
+ 
+/* Header */
+ 
+.page-header {
+  max-width: 1000px;
+  margin: 0 auto 36px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 30px;
+  border-bottom: 5px solid var(--border);
+  padding-bottom: 30px;
+}
+ 
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+}
+ 
+/* Logo Styling*/
+
+.logo-img {
+  width: clamp(120px, 14vw, 140px);
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
+  object-fit: cover;
+  object-position: center;
+  background: #1a1a1a;
+  flex-shrink: 0;
+  background: #1a1a1a;
+
+}
+ 
+.header-titles {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+ 
+h1 {
+  font-family: 'Oswald', sans-serif;
+  font-size: clamp(1.4rem, 3.5vw, 2.1rem);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #ffffff;
+  line-height: 1;
+}
+ 
+.header-subtitle {
+  font-size: 0.72rem;
+  color: var(--border);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+ 
+.header-tag {
+  font-family: 'Oswald', sans-serif;
+  font-size: 0.72rem;
+  background: var(--border);
+  color: #fff;
+  padding: 5px 14px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 500;
+  border-radius: 3px;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(192,57,43,0.4);
+  flex-shrink: 0;
+}
+ 
+@media (max-width: 600px) {
+  .page-header { flex-direction: column; align-items: flex-start; }
+  .header-tag { align-self: flex-start; }
+}
+ 
+/* Layout */
+ 
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+/* Form Card */
+
+ .form-card {
+  background: var(--surface);
+  border: 1px solid #333333;
+  border-top: 3px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  padding: 28px;
+  margin-bottom: 36px;
+}
+ 
+.form-card-title {
+  font-family: 'Oswald', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--border);
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #333333;
+}
+ 
+.form-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1.2fr 130px 170px auto;
+  gap: 14px;
+  align-items: end;
+}
+ 
+@media (max-width: 860px) {
+  .form-grid {
+    grid-template-columns: 1fr 1fr 130px;
+  }
+  .form-grid .field:nth-child(4) { grid-column: 1 / 3; }
+  .form-grid .submit-wrap { grid-column: 1 / -1; }
+}
+ 
+@media (max-width: 540px) {
+  .form-grid { grid-template-columns: 1fr 1fr; }
+  .form-grid .field:nth-child(1),
+  .form-grid .field:nth-child(2) { grid-column: 1 / -1; }
+  .form-grid .submit-wrap { grid-column: 1 / -1; }
+}
+ 
+@media (max-width: 380px) {
+  .form-grid { grid-template-columns: 1fr; }
+}
+ 
+.field label {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin-bottom: 7px;
+}
+ 
+.field label .optional {
+  text-transform: none;
+  font-size: 0.65rem;
+  color: #555;
+  font-weight: 400;
+}
+ 
+.field input,
+.field select {
+  width: 100%;
+  border: 1px solid #3a3a3a;
+  border-radius: 5px;
+  padding: 10px 13px;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.88rem;
+  background: var(--inset-bg);
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  appearance: none;
+}
+ 
+.field input:focus,
+.field select:focus {
+  border-color: var(--border);
+  box-shadow: 0 0 0 2px rgba(192,57,43,0.25);
+}
+ 
+.field input::placeholder {
+  color: #555;
+}
+ 
+.field select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 13px center;
+  padding-right: 36px;
+  cursor: pointer;
+}
+ 
+.submit-wrap {
+  display: flex;
+  align-items: flex-end;
+}
+ 
+.btn-row {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+ 
+
+/* Error */
+
+#errorMsg {
+  margin-top: 12px;
+  font-size: 0.8rem;
+  color: var(--danger);
+  display: none;
+  padding: 8px 13px;
+  background: rgba(255,68,68,0.08);
+  border: 1px solid rgba(255,68,68,0.35);
+  border-radius: 5px;
+}
+
+/* Table */
+ 
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+ 
+.section-header h2 {
+  font-family: 'Oswald', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+ 
+.total-badge {
+  background: var(--border);
+  color: #fff;
+  border-radius: 5px;
+  padding: 6px 16px;
+  font-family: 'Oswald', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  box-shadow: 0 2px 8px rgba(192,57,43,0.4);
+}
+.table-wrap {
+  background: var(--surface);
+  border: 1px solid #333333;
+  border-top: 3px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  overflow-x: auto;
+}
+ 
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  min-width: 640px;
+}
+ 
+thead th {
+  background: #111111;
+  color: var(--border);
+  text-align: left;
+  padding: 12px 16px;
+  font-family: 'Oswald', sans-serif;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 500;
+  border-bottom: 1px solid #333;
+}
+ 
+tbody tr {
+  border-bottom: 1px solid #2a2a2a;
+  transition: background 0.12s;
+}
+ 
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background: #2e2e2e; }
+ 
+tbody td {
+  padding: 13px 16px;
+  vertical-align: middle;
+}
+ 
+.row-num {
+  color: #555;
+  font-size: 0.75rem;
+}
+ 
+.amount-cell {
+  font-weight: 500;
+  color: #ffffff;
+}
+ 
+.details-cell {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-style: italic;
+}
+ 
+.details-cell.empty {
+  color: #444;
+}
+
+/* Category Badges */
+
+.category-pill {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 3px;
+  font-size: 0.68rem;
+  font-family: 'Oswald', sans-serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 500;
+  white-space: nowrap;
+}
+ 
+.category-pill.fuel              { background: rgba(192,57,43,0.18); color: #e84c3d; border: 1px solid rgba(192,57,43,0.35); }
+.category-pill.material-cost     { background: rgba(136,136,136,0.15); color: #aaaaaa; border: 1px solid rgba(136,136,136,0.3); }
+.category-pill.insurance         { background: rgba(255,255,255,0.07); color: #cccccc; border: 1px solid rgba(255,255,255,0.15); }
+.category-pill.loan-payment      { background: rgba(192,57,43,0.10); color: #cc8888; border: 1px solid rgba(192,57,43,0.2); }
+.category-pill.advertising       { background: rgba(255,255,255,0.05); color: #bbbbbb; border: 1px solid rgba(255,255,255,0.1); }
+.category-pill.maintenance        { background: rgba(192,57,43,0.08); color: #bb7766; border: 1px solid rgba(192,57,43,0.18); }
+.category-pill.parts-repairs      { background: rgba(136,136,136,0.12); color: #999999; border: 1px solid rgba(136,136,136,0.25); }
+.category-pill.federal-licensing  { background: rgba(255,255,255,0.06); color: #aaaaaa; border: 1px solid rgba(255,255,255,0.12); }
+.category-pill.other-business     { background: rgba(80,80,80,0.2); color: #999999; border: 1px solid rgba(80,80,80,0.35); }
+ 
+.actions-cell {
+  white-space: nowrap;
+}
+ 
+/* Table Footer */
+ 
+tfoot td {
+  padding: 13px 16px;
+  background: #111111;
+  border-top: 1px solid #333;
+  font-weight: 500;
+  color: #ffffff;
+}
+
+/* Empty Message */
+ 
+#emptyMsg {
+  text-align: center;
+  color: #444;
+  font-size: 0.85rem;
+  font-style: italic;
+  padding: 44px 16px;
+  display: none;
+}

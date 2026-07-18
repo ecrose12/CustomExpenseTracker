@@ -350,9 +350,10 @@ tbody td {
 .category-pill.insurance         { background: rgba(255,255,255,0.07); color: #cccccc; border: 1px solid rgba(255,255,255,0.15); }
 .category-pill.loan-payment      { background: rgba(192,57,43,0.10); color: #cc8888; border: 1px solid rgba(192,57,43,0.2); }
 .category-pill.advertising       { background: rgba(255,255,255,0.05); color: #bbbbbb; border: 1px solid rgba(255,255,255,0.1); }
-.category-pill.maintenance        { background: rgba(192,57,43,0.08); color: #bb7766; border: 1px solid rgba(192,57,43,0.18); }
-.category-pill.parts-repairs      { background: rgba(136,136,136,0.12); color: #999999; border: 1px solid rgba(136,136,136,0.25); }
+.category-pill.category-pill.truck-parts-maintenance        { background: rgba(192,57,43,0.08); color: #bb7766; border: 1px solid rgba(192,57,43,0.18); }
+.category-pill.property-dmg-costs      { background: rgba(136,136,136,0.12); color: #999999; border: 1px solid rgba(136,136,136,0.25); }
 .category-pill.federal-licensing  { background: rgba(255,255,255,0.06); color: #aaaaaa; border: 1px solid rgba(255,255,255,0.12); }
+.category-pill.state-licensing  { background: rgba(255,255,255,0.06); color: #aaaaaa; border: 1px solid rgba(255,255,255,0.12); }
 .category-pill.other-business     { background: rgba(80,80,80,0.2); color: #999999; border: 1px solid rgba(80,80,80,0.35); }
  
 .actions-cell {
@@ -378,4 +379,41 @@ tfoot td {
   font-style: italic;
   padding: 44px 16px;
   display: none;
+}
+
+.receipt-upload-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.receipt-filename {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.78rem;
+  color: #777;
+  font-style: italic;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 160px;
+}
+
+.receipt-thumb {
+  width: 36px;
+  height: 36px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid #444;
+  cursor: pointer;
+  transition: border-color 0.12s;
+}
+
+.receipt-thumb:hover {
+  border-color: #c0392b;
+}
+
+.no-receipt {
+  color: #555;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.82rem;
 }

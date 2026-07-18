@@ -65,7 +65,6 @@ function applyRowBtnStyle(btn, type) {
     }
     btn.style.transform = 'translateY(-1px)';
   });
- 
   btn.addEventListener('mouseleave', () => {
     btn.style.background = 'transparent';
     btn.style.borderColor = type === 'edit' ? '#444' : 'rgba(255,68,68,0.35)';

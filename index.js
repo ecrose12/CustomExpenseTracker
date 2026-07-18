@@ -76,7 +76,7 @@ const categories = [
   "Federal Licensing", "State Licensing", "Other Business Cost"
 ];
 
-// localStorage 
+// localStorage
 const STORAGE_KEY = "fit_expenses";
 
 function saveExpenses() {
@@ -91,8 +91,9 @@ function loadExpensesFromLocalStorage() {
   } catch (e) { return []; }
 }
 
-// DOM refs 
-// const form            = document.getElementById("expense-Form");
+// DOM refs
+// NOTE: form is declared later, right before it's used, to match the
+// #expenseForm id fix (see FIX #1 below).
 const descInput       = document.getElementById("description");
 const detailsInput    = document.getElementById("details");
 const amountInput     = document.getElementById("amount");
@@ -113,7 +114,7 @@ applyReceiptStyle(receiptBtn);
 applySubmitStyle(submitBtn, 'add');
 applyCancelStyle(cancelBtn, false);
 
-// Receipt hover / press listeners 
+// Receipt hover / press listeners
 receiptBtn.addEventListener('mouseenter', () => {
   receiptBtn.style.background = '#777777';
   receiptBtn.style.transform  = 'translateY(-1px)';
@@ -132,7 +133,7 @@ receiptBtn.addEventListener('mouseup', () => {
   receiptBtn.style.transform  = 'translateY(-1px)';
 });
 
-// Submit hover / press listeners 
+// Submit hover / press listeners
 submitBtn.addEventListener('mouseenter', () => {
   submitBtn.style.background = submitBtn.classList.contains('editing')
     ? '#aaaaaa' : '#e84c3d';
@@ -157,7 +158,7 @@ submitBtn.addEventListener('mouseup', () => {
   submitBtn.style.transform  = 'translateY(-1px)';
 });
 
-// Cancel hover listeners 
+// Cancel hover listeners
 cancelBtn.addEventListener('mouseenter', () => {
   cancelBtn.style.borderColor = '#c0392b';
   cancelBtn.style.color       = '#c0392b';
@@ -167,14 +168,30 @@ cancelBtn.addEventListener('mouseleave', () => {
   cancelBtn.style.color       = '#999999';
 });
 
-// Receipt picker 
+// Cancel editing: clear the form, exit edit mode, hide this button again
+cancelBtn.addEventListener('click', () => {
+  editingID = null;
+  form.reset();
+  document.querySelector("#expenseForm #submitBtn").textContent = 'Add Expense';
+  applyCancelStyle(cancelBtn, false);
+  errorMsg.textContent = '';
+  receiptDataURL = null;
+  receiptFileName.textContent = '';
+});
+
+// Receipt picker
 receiptBtn.addEventListener("click", () => receiptInput.click());
+
+let receiptCompressionPromise = null;
 
 receiptInput.addEventListener("change", () => {
   const file = receiptInput.files[0];
   if (!file) return;
   receiptFileName.textContent = file.name;
-  compressImage(file).then(dataURL => { receiptDataURL = dataURL; });
+  receiptCompressionPromise = compressImage(file).then(dataURL => {
+    receiptDataURL = dataURL;
+    receiptCompressionPromise = null;
+  });
 });
 
 function compressImage(file, maxWidth = 800, quality = 0.7) {
@@ -196,16 +213,16 @@ function compressImage(file, maxWidth = 800, quality = 0.7) {
   });
 }
 
-// State 
+// State
 let expenses   = [];
 let editingID  = null;
-const user = {"id": 1, "name": "Rodrigo"};
-let currentUser = user;
+let currentUser = null; // set once the user picks a name from the login picker
+let usersList   = [];
 
 let receiptDataURL = null;
 
 
-// Categories 
+// Categories
 function loadCategoriesStatic() {
   categories.forEach(cat => {
     const opt = document.createElement("option");
@@ -231,30 +248,78 @@ function categoryClass(cat) {
 /****** ON PAGE LOAD ********************/
 document.addEventListener('DOMContentLoaded', () => {
   console.log('page loaded');
-  setUserInLocalStorage();
-  setTimeout(() => {
-    console.log('loading...');
-  }, 2000)
-  getUserFromLocalStorage();
-  loadCategories(); // This will call the async version, which is correct for your backend
-  // Optionally, you can call loadCategoriesStatic() if you want static categories
-  loadExpenses(); // This will call the async version, which is correct for your backend
+  initUserPicker();
 });
 
-function setUserInLocalStorage(){
-   localStorage.setItem("user", JSON.stringify(user))
+const USER_STORAGE_KEY = "fit_current_user";
+
+function saveCurrentUserToLocalStorage(){
+  localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(currentUser));
 }
 
-function getUserFromLocalStorage(){
-  const user = localStorage.getItem("user")
-  console.log('user', user)
-  
-  if(!user || user === '{}'){
-    console.error('could not find user object in local storage')
+function getSavedUserFromLocalStorage(){
+  const raw = localStorage.getItem(USER_STORAGE_KEY);
+  if(!raw) return null;
+  try { return JSON.parse(raw); }
+  catch(e) { return null; }
+}
+
+// Fetch the list of users, populate the picker, and either restore a
+// previously-selected user or wait for the person to pick one.
+async function initUserPicker(){
+  const userSelect = document.querySelector("#userSelect");
+  const loginBtn    = document.querySelector("#loginBtn");
+  const currentUserLabel = document.querySelector("#currentUserLabel");
+
+  try {
+    const response = await fetch(`http://localhost:3001/users`);
+    if (!response.ok) throw new Error("Failed to fetch users");
+    usersList = await response.json();
+  } catch (error) {
+    console.error(error);
+    usersList = [];
   }
-  
-  currentUser = JSON.parse(user)
-  
+
+  userSelect.innerHTML = '<option value="" disabled selected>Select your name…</option>';
+  usersList.forEach(u => {
+    const opt = document.createElement("option");
+    opt.value = u.id;
+    opt.textContent = u.name;
+    userSelect.appendChild(opt);
+  });
+
+  const savedUser = getSavedUserFromLocalStorage();
+  const savedUserStillValid = savedUser && usersList.some(u => u.id === savedUser.id);
+
+  if (savedUserStillValid) {
+    currentUser = savedUser;
+    userSelect.value = currentUser.id;
+    onUserLoggedIn();
+  } else {
+    // No valid saved user — show the picker and wait for a selection.
+    currentUser = null;
+    currentUserLabel.textContent = "Not logged in";
+  }
+
+  loginBtn.addEventListener("click", () => {
+    const selectedId = userSelect.value;
+    if (!selectedId) return;
+    const selected = usersList.find(u => u.id === selectedId);
+    if (!selected) return;
+
+    currentUser = selected;
+    saveCurrentUserToLocalStorage();
+    onUserLoggedIn();
+  });
+}
+
+// Called once we have a confirmed currentUser — loads their data
+function onUserLoggedIn(){
+  const currentUserLabel = document.querySelector("#currentUserLabel");
+  currentUserLabel.textContent = `Logged in as: ${currentUser.name}`;
+
+  loadCategories();
+  loadExpenses();
 }
 
 
@@ -265,74 +330,102 @@ function getUserFromLocalStorage(){
 
 
 /****** CRUD - expenses ********************/
-const form = document.querySelector("#expense-form");
+
+// FIX #1: id now matches index.html's <form id="expenseForm">
+const form = document.querySelector("#expenseForm");
 
 // listen for form submission event
-form.addEventListener("submit", function(event){
+form.addEventListener("submit", async function(event){
   event.preventDefault();  // prevents page refresh
+
+  if (!currentUser) {
+    errorMsg.textContent = "Please select your name and log in before adding an expense.";
+    return;
+  }
+
+  // If a receipt was just attached, make sure compression has actually
+  // finished before we build the payload — otherwise receiptDataURL can
+  // still be stale/null at this exact moment.
+  if (receiptCompressionPromise) {
+    submitBtn.textContent = "Processing receipt…";
+    await receiptCompressionPromise;
+    submitBtn.textContent = editingID !== null ? "Update Expense" : "Add Expense";
+  }
 
   const description = document.querySelector("#description").value;
   console.log('description', description)
+  const details = document.querySelector("#details").value;
+  console.log('details', details)
   const amount = document.querySelector("#amount").value;
   console.log('amount', amount);
   const category = document.querySelector("#category").value;
   console.log('category', category)
 
+  // FIX #9: validate before doing anything else, and surface the error
+  const validationResult = validateExpenses(description, amount, category);
+  if (validationResult !== 'Valid') {
+    errorMsg.textContent = validationResult;
+    return;
+  }
+  errorMsg.textContent = '';
+
   //edit
   if(editingID !== null){
     console.log('editingID in submit', editingID);
 
-    for(let i=0; i < expenses.length; i++){
-      if(expenses[i].id === editingID){
-        expenses[i].description = description;
-        expenses[i].amount = amount;
-        expenses[i].category = category;
-      }
-      break;
-    }
+    await updateExpense(editingID, description, details, amount, category);
 
-    document.querySelector("#expense-form button[type='submit']").textContent = "Add Expense";
+    document.querySelector("#expenseForm #submitBtn").textContent = "Add Expense";
+    applyCancelStyle(cancelBtn, false);
     editingID = null;
   }
   //add
   else{
-    //validate expense
-    console.log(validateExpenses(description, amount, category))
-
     // add data to expense
-    addExpense(description, amount, category);
+    await addExpense(description, details, amount, category);
   }
 
-  // render to page
-  renderExpenses()
+  // reset receipt state so it doesn't leak into the next expense
+  receiptDataURL = null;
+  receiptFileName.textContent = '';
+
+  // addExpense/updateExpense already reload + re-render from the server,
+  // so no extra render call is needed here.
 })
 
 
 // CREATE/POST
-async function addExpense(description, amount, category){
-  console.log(`incoming expense => description: ${description}, amount: ${amount}, category: ${category}`)
-  
+async function addExpense(description, details, amount, category){
+  console.log(`incoming expense => description: ${description}, details: ${details}, amount: ${amount}, category: ${category}`)
+  console.log('receiptDataURL at submit time:', receiptDataURL ? `present (${receiptDataURL.length} chars)` : receiptDataURL)
+
 
   const expense = {
     description: description,
+    details: details,
     amount: amount,
     category_id: category,
-    date: dateFormating(new Date())
+    date: dateFormating(new Date()),
+    user_id: currentUser.id,
+    receipt_url: receiptDataURL,
   }
   console.log('created expense', expense)
 
   try {
-    // TODO: complete server route and database insert
-    // POST request to create expense record in database
+    // FIX #4: send the expense fields directly — the server expects a flat
+    // body ({ description, details, amount, category_id, date, receipt_url }),
+    // not { expense: {...} }
     const response = await fetch(`http://localhost:3001/expenses`, {
       method: 'POST',
       headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({expense})
+      body: JSON.stringify(expense)
     });
     if (!response.ok) {
         throw new Error("Failed to fetch expenses");
     }
-   
+
+    // refresh local list from the server after a successful add
+    await loadExpenses();
 
   } catch (error) {
     console.error(error)
@@ -340,11 +433,42 @@ async function addExpense(description, amount, category){
 
 }
 
+// UPDATE/PUT — actually persists an edit to the database
+async function updateExpense(expenseId, description, details, amount, category){
+  const updatedFields = {
+    description: description,
+    details: details,
+    amount: amount,
+    category_id: category,
+    user_id: currentUser.id,
+    receipt_url: receiptDataURL,
+  }
+  console.log('updating expense', expenseId, updatedFields)
+
+  try {
+    const response = await fetch(`http://localhost:3001/expenses/${expenseId}`, {
+      method: 'PUT',
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(updatedFields)
+    });
+    if (!response.ok) {
+      throw new Error("Failed to update expense");
+    }
+
+    // refresh local list from the server so the table reflects what's
+    // actually saved, not just what we think we sent
+    await loadExpenses();
+
+  } catch (error) {
+    console.error(error)
+  }
+}
+
 //  READ/GET
 async function loadExpenses(){
   try {
-    // GET request to get all expenses from database
-    const response = await fetch(`http://localhost:3001/expenses/${currentUser.id}`);
+    // GET /expenses filters by user server-side; pass the selected user's id
+    const response = await fetch(`http://localhost:3001/expenses?user_id=${currentUser.id}`);
     if (!response.ok) {
         throw new Error("Failed to fetch expenses");
     }
@@ -375,19 +499,45 @@ function editExpense(expenseID){
     return;
   }
 
-
-
   document.querySelector('#description').value = expenseToEdit.description;
+  document.querySelector('#details').value = expenseToEdit.details ?? '';
   document.querySelector('#amount').value = expenseToEdit.amount;
-  document.querySelector('#category').value = expenseToEdit.category;
+  // FIX #7: the <select> options are keyed by category_id, not the nested
+  // category object returned by the "*, category(name)" select
+  document.querySelector('#category').value = expenseToEdit.category_id;
+
+  // Pre-load the existing receipt (if any) so it's preserved on update
+  // unless the person attaches a new one, which overwrites receiptDataURL
+  // via the receiptInput "change" listener.
+  receiptDataURL = expenseToEdit.receipt_url ?? null;
+  receiptFileName.textContent = expenseToEdit.receipt_url ? 'Existing receipt attached' : '';
 
   editingID = expenseToEdit.id;
 
-  //update button to say edit expense
+  // show the cancel button so the person can back out of editing
+  applyCancelStyle(cancelBtn, true);
 
-  saveExpenses();
+  // FIX #1: id now matches #expenseForm
+  document.querySelector("#expenseForm #submitBtn").textContent = 'Update Expense';
+}
 
-  document.querySelector("#expense-form button[type='submit']").textContent = 'Update Expense';
+// Opens a stored receipt in a new tab. Receipts are stored as base64
+// data: URLs, and modern browsers block top-level navigation directly to
+// data: URLs (they silently do nothing). Converting to a blob: URL first
+// works around that restriction.
+function viewReceipt(expenseID){
+  const expense = expenses.find(e => e.id === expenseID);
+  if (!expense || !expense.receipt_url) return;
+
+  fetch(expense.receipt_url)
+    .then(res => res.blob())
+    .then(blob => {
+      const blobUrl = URL.createObjectURL(blob);
+      window.open(blobUrl, '_blank');
+      // revoke after a delay so the new tab has time to load it
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+    })
+    .catch(err => console.error('Failed to open receipt:', err));
 }
 
 // DELETE/DELETE
@@ -415,7 +565,7 @@ function deleteExpense(expenseID){
 
   saveExpenses();
 
-  renderExpenses();
+  renderExpenses(expenses); // FIX #3
 
 }
 
@@ -433,8 +583,8 @@ async function loadCategories(){
   let categoriesArray = [];
 
   try {
-    // GET request to get all categories from database
-    const response = await fetch(`http://localhost:3001/categories/${currentUser.id}`);
+    // categories are shared across all users — no user_id filter needed
+    const response = await fetch(`http://localhost:3001/category`);
     if (!response.ok) {
         throw new Error("Failed to fetch categories");
     }
@@ -465,9 +615,9 @@ async function loadCategories(){
 
 // validation
 function validateExpenses(description, amount, category){
-console.log('inside validate', description.trim())
+  console.log('inside validate', description.trim())
   if(!description || description.trim() === ""){
-    return 'Description is requred';
+    return 'Description is required';
   }
 
   if(!amount || amount <= 0){
@@ -487,37 +637,61 @@ function dateFormating(date){
   return dateObj.toLocaleDateString(); //format like 1/16/2025
 }
 
+// format date + time for display in the expense table
+// prefers created_at (full timestamp) since the "date" column only stores
+// a calendar date with no time component
+function formatExpenseTimestamp(expense){
+  const raw = expense.created_at ?? expense.date;
+  if (!raw) return '';
+  const dateObj = new Date(raw);
+  if (isNaN(dateObj.getTime())) return '';
+  return dateObj.toLocaleString(undefined, {
+    dateStyle: 'short',
+    timeStyle: expense.created_at ? 'short' : undefined,
+  });
+}
+
 // render expenses on page
 function renderExpenses(expenses){
 
-  const tbody = document.querySelector("#expense-tbody");
+  // FIX #2: match the real ids in index.html (#expenseTableBody,
+  // #totalAmount / #totalAmountFoot) instead of the non-existent
+  // #expense-tbody / #total
+  const tbody = document.querySelector("#expenseTableBody");
   tbody.innerHTML = "";
+
+  const totalAmountEl = document.querySelector("#totalAmount");
+  const totalFootEl   = document.querySelector("#totalAmountFoot");
 
   if(!expenses || expenses.length === 0){
     console.log('no more expenses')
-    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-5">No expenses yet!</td></tr>';
-    const totalElement = document.querySelector("#total");
-    totalElement.textContent = `$0.00`;
+    tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-5">No expenses yet!</td></tr>';
+    totalAmountEl.textContent = `$0.00`;
+    totalFootEl.textContent = `$0.00`;
   }
   else {
     // loop through expenses and build table
+    let total = 0;
 
     for(let i = 0; i < expenses.length; i++){
       const currentExpense = expenses[i];
+      total += parseFloat(currentExpense.amount) || 0;
 
       const tr = document.createElement('tr');
 
       tr.innerHTML = `
-        <th scope="row">${currentExpense.id}</th>
-        <td>${currentExpense.date}</td>
+        <th scope="row">${formatExpenseTimestamp(currentExpense)}</th>
         <td>${currentExpense.description}</td>
-        <td>${currentExpense.category}</td>
+        <td>${currentExpense.details ?? ''}</td>
         <td>$${parseFloat(currentExpense.amount).toFixed(2)}</td>
+        <td>${currentExpense.category?.name ?? ''}</td>
+        <td>${currentExpense.users?.name ?? ''}</td>
+        <td>${currentExpense.receipt_url ? `<a href="#" onclick="viewReceipt('${currentExpense.id}'); return false;">View</a>` : ''}</td>
         <td>
-          <button class="btn btn-warning btn-sm" onclick="editExpense(${currentExpense.id})">
+          <button class="btn btn-warning btn-sm" onclick="editExpense('${currentExpense.id}')">
             Edit
           </button>
-          <button class="btn btn-danger btn-sm" onclick="deleteExpense(${currentExpense.id})">
+          <button class="btn btn-danger btn-sm" onclick="deleteExpense('${currentExpense.id}')">
             Delete
           </button>
         </td>
@@ -526,40 +700,12 @@ function renderExpenses(expenses){
       tbody.appendChild(tr)
     }
 
-    // get total 
-    // const total = getTotal();
-
-    // //display total on page
-    // const totalElement = document.querySelector("#total");
-    // totalElement.textContent = `$${total.toFixed(2)}`;
+    // get total
+    totalAmountEl.textContent = `$${total.toFixed(2)}`;
+    totalFootEl.textContent = `$${total.toFixed(2)}`;
   }
 
   form.reset();
 }
 
 /*****************************************/
-
-
-
-
-
-
-
-
-
-
-
-
-// function getTotal(){
-//   let sum = 0;
-//   for (let index = 0; index < expenses.length; index++) {
-//     const currentExpense = expenses[index];
-//     console.log('current expense amount', currentExpense.amount)
-//     // sum = sum + currentExpense[index].amount;
-//     sum += parseFloat(currentExpense.amount);
-//   }
-  
-//   return sum;
-// }
-
-

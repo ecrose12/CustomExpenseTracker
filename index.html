@@ -20,6 +20,12 @@
   <span class="header-tag">For Internal Use Only</span>
 </div>
 
+<div class="user-picker-bar" style="display:flex; align-items:center; gap:10px; padding:10px 20px;">
+  <select id="userSelect"></select>
+  <button type="button" id="loginBtn">Log In</button>
+  <span id="currentUserLabel">Not logged in</span>
+</div>
+
 <div class="container">
 
   <!-- Form -->
@@ -80,11 +86,12 @@
     <table>
       <thead>
         <tr>
-          <th>#</th>
+          <th>Date/Time</th>
           <th>Description</th>
           <th>Details</th>
           <th>Amount</th>
           <th>Category</th>
+          <th>Logged By</th>
           <th>Receipt</th>
           <th>Actions</th>
         </tr>
@@ -92,7 +99,7 @@
       <tbody id="expenseTableBody"></tbody>
       <tfoot>
         <tr>
-          <td colspan="4" style="text-align:right;">Total</td>
+          <td colspan="5" style="text-align:right;">Total</td>
           <td id="totalAmountFoot">$0.00</td>
           <td colspan="2"></td>
         </tr>
